@@ -8,16 +8,16 @@ library(dplyr)
 library(tools)
 
 tif_files <- c(
-  "Burn-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/统一分辨率/Burn-ghg/Burn_2023.tif",
-  "crop-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/统一分辨率/crop-ghg/Total_GHG_2023.tif",
-  "Fer-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/统一分辨率/Fer-ghg/Fer_2023.tif",
-  "Irr-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/统一分辨率/Irr-ghg/Irr_2023.tif",
-  "Irre-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/统一分辨率/Irre-ghg/IRRE_2023.tif",
-  "Mac-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/统一分辨率/Mac-ghg/Mac_2023.tif",
-  "Manure-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/统一分辨率/Manure-ghg/Manure_2023.tif",
-  "Rice-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/统一分辨率/Rice-ghg/Rice_2023.tif",
-  "sum-ghg_2023" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/统一分辨率/sum-ghg/sum_output_2023.tif",
-  "sum-ghg_2010" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/统一分辨率/sum-ghg/sum_output_2010.tif"
+  "Burn-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/Burn-ghg/Burn_2023.tif",
+  "crop-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/crop-ghg/Total_GHG_2023.tif",
+  "Fer-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/Fer-ghg/Fer_2023.tif",
+  "Irr-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/Irr-ghg/Irr_2023.tif",
+  "Irre-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/Irre-ghg/IRRE_2023.tif",
+  "Mac-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/Mac-ghg/Mac_2023.tif",
+  "Manure-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/Manure-ghg/Manure_2023.tif",
+  "Rice-ghg" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/Rice-ghg/Rice_2023.tif",
+  "sum-ghg_2023" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/sum-ghg/sum_output_2023.tif",
+  "sum-ghg_2010" = "/Users/dongjingjing/Desktop/GHG/Data/Data_result/sum-ghg/sum_output_2010.tif"
 )
 
 province_boundary_path <- "/Users/dongjingjing/Desktop/GHG/FIG/shengfenbianjie.json"
@@ -27,13 +27,13 @@ province_sf <- tryCatch({
   st_read(province_boundary_path, quiet = TRUE) %>%
     st_transform(4326)  
 }, error = function(e) {
-  stop("无法读取省份边界文件: ", e$message)
+  stop(" ", e$message)
 })
 
 name_fields <- c("NAME", "name", "省份", "省名")
 name_field <- name_fields[name_fields %in% colnames(province_sf)][1]
 if (is.na(name_field)) {
-  stop("省份边界数据中未找到识别的名称字段，请检查数据结构")
+  stop("")
 }
 
 exclude_provinces <- c("香港", "澳门", "台湾", "香港特别行政区", "澳门特别行政区", "台湾省")
@@ -49,7 +49,7 @@ for (tif_name in names(tif_files)) {
     r <- raster(tif_files[tif_name])
     
     if (st_crs(province_sf) != crs(r)) {
-      message("正在转换", basename(tif_files[tif_name]), "的投影...")
+      message("", basename(tif_files[tif_name]), "")
       r <- projectRaster(r, crs = st_crs(province_sf)$proj4string)
     }
     
@@ -72,7 +72,7 @@ for (tif_name in names(tif_files)) {
       province_raster <- tryCatch({
         mask(crop(r, province_sf[i, ]), province_sf[i, ])
       }, error = function(e) {
-        warning("处理", province_name, "时出错: ", e$message)
+        warning("", province_name, ": ", e$message)
         return(NULL)
       })
       
@@ -94,10 +94,10 @@ for (tif_name in names(tif_files)) {
     
     sum_output_file <- file.path(overall_output, paste0("sum_results_", tif_name, ".csv"))
     write.csv(sum_results, sum_output_file, row.names = FALSE, fileEncoding = "UTF-8")
-    message("处理完成: ", basename(tif_files[tif_name]))
+    message(" ", basename(tif_files[tif_name]))
     
   }, error = function(e) {
-    warning("处理文件", basename(tif_files[tif_name]), "时出错: ", e$message)
+    warning("", basename(tif_files[tif_name]), ": ", e$message)
   })
 }
 
@@ -108,10 +108,10 @@ if (length(all_sum_files) > 0) {
   
   write.csv(combined_results, file.path(overall_output, "all_provinces_combined_results.csv"),
             row.names = FALSE, fileEncoding = "UTF-8")
-  message("所有结果已合并至: all_provinces_combined_results.csv")
+  message(" all_provinces_combined_results.csv")
 }
 
-message("所有文件处理完毕！结果保存在: ", overall_output)
+message(": ", overall_output)
 
 
 
@@ -214,8 +214,8 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
   scale_color_gradientn(
     name = "Emission intensity (t/ha)", 
     colours = custom_colors,
-    limits = c(0.3, 1.15),
-    breaks = seq(0.3, 1.15, by = 0.2),
+    limits = c(0, 1.5),
+    breaks = seq(0, 1.5, by = 0.3),
     guide = guide_colorbar(
       barwidth = 0.2,
       barheight = 4,
@@ -232,8 +232,8 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
   ) +
   
   labs(
-    x = "Proportion of dryland area (%)", 
-    y = "Food crop planting area (kha)"   
+    x = "Proportion of dryland area (normalized)", 
+    y = "Food crop planting area (normalized)"   
   ) +
   
   theme_minimal() +
@@ -333,7 +333,7 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
     box.padding = 0.2,   
     point.padding = 0.2, 
     max.overlaps = 25,   
-    force = 1,           
+    force = 1,            
     segment.size = 0.2   
   ) +
   
@@ -349,6 +349,7 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
     breaks = size_labels,
     labels = size_labels,
     guide = guide_legend(
+      order = 1,                
       title.position = "left", 
       title.hjust = 0.5, 
       label.position = "bottom", 
@@ -361,9 +362,10 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
   scale_color_gradientn(
     name = "Emission intensity (t/ha)", 
     colours = custom_colors,
-    limits = c(0.03, 0.2),
-    breaks = seq(0.03, 0.2, by = 0.02),
+    limits = c(0, 0.06),
+    breaks = seq(0, 0.06, by = 0.02),
     guide = guide_colorbar(
+      order = 2,                
       barwidth = 0.2,
       barheight = 4,
       ticks = TRUE,
@@ -379,8 +381,8 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
   ) +
   
   labs(
-    x = "Proportion of dryland area (%)", 
-    y = "Food crop planting area (kha)"   
+    x = "Proportion of dryland area (normalized)", 
+    y = "Food crop planting area (normalized)"   
   ) +
   
   theme_minimal() +
@@ -404,21 +406,29 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
     plot.subtitle = element_text(size = 8, color = "black", family = "Arial"), 
     plot.caption = element_text(size = 8, color = "black", family = "Arial") 
   ) +
-
+  
   annotate("text", x = 0.2, y = 1, 
            label = "'N'[2] * 'O Emissions'", 
-           parse = TRUE,                      
+           parse = TRUE,                       
            size = 3, hjust = 0.5, vjust = 0, color = "black", family = "Arial")
 
 p_with_marginal <- ggExtra::ggMarginal(p, type = "density", fill = "skyblue", size = 10)
 
-legend <- get_legend(p + theme(legend.position = "right", 
-                               legend.title = element_text(angle = -270),
-                               legend.margin = margin(t = 20, r = 1, b = -25, l = 00)))
+legend <- get_legend(p + theme(
+  legend.position = "right",
+  legend.box = "vertical",
+  legend.spacing.y = unit(0.2, "cm"), 
+  legend.title = element_text(angle = -270),
+  legend.margin = margin(t = 20, r = 1, b = -25, l = 00)
+))
 
 FIG3b <- plot_grid(p_with_marginal, legend, rel_widths = c(0.7, 0.15)) 
 
 ggsave("/Users/dongjingjing/Desktop/GHG/FIG/FIG3/FIG3b.png", plot = FIG3b, width = 9, height = 8, unit = "cm", dpi = 300)
+
+
+
+
 
 #####################################################cccccccccccccccccc###########################################
 #####################################################ccccccccccccccccccccc###########################################
@@ -436,7 +446,7 @@ data <- read_excel(file_path, sheet = 3)
 convert_to_numeric <- function(column) {
   if (is.character(column) || is.factor(column)) {
     column <- as.character(column) %>% trimws() %>% str_remove_all("[,￥$€]")
-    column <- ifelse(column %in% c("", "NA", "无数据", "--"), NA, column)
+    column <- ifelse(column %in% c("", "NA", "", "--"), NA, column)
   }
   as.numeric(column)
 }
@@ -513,8 +523,8 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
   scale_color_gradientn(
     name = "Emission intensity (t/ha)", 
     colours = custom_colors,
-    limits = c(0, 0.03),
-    breaks = seq(0, 0.03, by = 0.003),
+    limits = c(0, 0.3),
+    breaks = seq(0, 0.3, by = 0.1),
     guide = guide_colorbar(
       barwidth = 0.2,
       barheight = 4,
@@ -531,8 +541,8 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
   ) +
   
   labs(
-    x = "Proportion of dryland area (%)", 
-    y = "Food crop planting area (kha)" 
+    x = "Proportion of dryland area (normalized)", 
+    y = "Food crop planting area (normalized)" 
   ) +
   
   theme_minimal() +
@@ -572,6 +582,7 @@ ggsave("/Users/dongjingjing/Desktop/GHG/FIG/FIG3/FIG3c.png", plot = FIG3c, width
 #####################################################ddddddddddddddddddddd###########################################
 #####################################################ddddddddddddddddddddddd###########################################
 #####################################################dddddddddddddddddddddddd###########################################
+
 if (!require("ggrepel")) install.packages("ggrepel")
 library(ggplot2)
 library(readxl)
@@ -635,7 +646,7 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
     box.padding = 0.2,   
     point.padding = 0.2, 
     max.overlaps = 25,   
-    force = 1,           
+    force = 1,            
     segment.size = 0.2   
   ) +
   
@@ -650,6 +661,7 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
     breaks = size_labels,
     labels = size_labels,
     guide = guide_legend(
+      order = 1,                
       title.position = "left",  
       title.hjust = 0.5,  
       label.position = "bottom",  
@@ -659,13 +671,13 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
     )
   ) +
   
- 
   scale_color_gradientn(
     name = "Emission intensity (t/ha)",  
     colours = custom_colors,
-    limits = c(0.1, 1.1),
-    breaks = seq(0.1, 1.1, by = 0.1),
+    limits = c(0, 0.28),
+    breaks = seq(0, 0.28, by = 0.07),
     guide = guide_colorbar(
+      order = 2,               
       barwidth = 0.2,
       barheight = 4,
       ticks = TRUE,
@@ -680,15 +692,13 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
     )
   ) +
   
-  
   labs(
-    x = "Proportion of dryland area (%)",  
-    y = "Food crop planting area (kha)"   
+    x = "Proportion of dryland area (normalized)",  
+    y = "Food crop planting area (normalized)"   
   ) +
   
   theme_minimal() +
   theme(
-    
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     
@@ -714,21 +724,18 @@ p <- ggplot(data, aes(x = X_Value, y = Y_Value)) +
 
 p_with_marginal <- ggExtra::ggMarginal(p, type = "density", fill = "skyblue", size = 10)
 
-
-legend <- get_legend(p + theme(legend.position = "right", 
-                               legend.title = element_text(angle = -270),
-                               legend.margin = margin(t = 20, r = 1, b = -25, l = 00)))
+# 【修改】增加 legend.box = "vertical" 和间距设置
+legend <- get_legend(p + theme(
+  legend.position = "right",
+  legend.box = "vertical",
+  legend.spacing.y = unit(0.2, "cm"),
+  legend.title = element_text(angle = -270),
+  legend.margin = margin(t = 20, r = 1, b = -25, l = 00)
+))
 
 FIG3d <- plot_grid(p_with_marginal, legend, rel_widths = c(0.7, 0.15))  
 
 ggsave("/Users/dongjingjing/Desktop/GHG/FIG/FIG3/FIG3d.png", plot = FIG3d, width = 9, height = 8, unit = "cm", dpi = 300)
-
-
-
-
-
-
-
 ##############EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 ##############EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 ##############EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -925,7 +932,7 @@ ggsave("/Users/dongjingjing/Desktop/GHG/FIG/FIG3/FIG3f.png", plot = FIG3f, width
 
 
 
-############################合并
+############################COMBINE
 
 
 if (!require("magick")) install.packages("magick")
@@ -976,4 +983,4 @@ output_image_path <- "/Users/dongjingjing/Desktop/GHG/FIG/FIG3/combined_image_wi
 
 ggsave(output_image_path, plot = combined_plot, width = 18, height = 24, units = "cm", dpi = 300, bg = "white")
 
-message("图像合并成功！合并后的文件路径：", output_image_path)
+message("：", output_image_path)
