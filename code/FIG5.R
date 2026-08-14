@@ -8,7 +8,9 @@ library(scales)
 library(RColorBrewer) 
 library(purrr) 
 
-
+# ============================================================
+# 1. 全局配置与数据准备 (保持不变)
+# ============================================================
 map_path  <- "/Users/dongjingjing/Desktop/GHG/FIG/shengfenbianjie.json"
 data_path <- "/Users/dongjingjing/Desktop/GHG/FIG/FIG5/FIG5.xlsx"
 output_path <- "/Users/dongjingjing/Desktop/GHG/FIG/FIG5/FIG5_Final_SmoothCurve_WithPoints.png"
@@ -30,7 +32,9 @@ common_theme <- theme_bw(base_size = 7.5, base_family = "Arial") +
 
 map_theme <- theme_void(base_family = "Arial") + theme(legend.position = "none", plot.margin = margin(0,0,0,0))
 
-
+# ============================================================
+# 2. 核心绘图函数 (针对 2024-2060 分段平滑)
+# ============================================================
 create_zone_plot <- function(config) {
   raw_data <- suppressMessages(read_excel(data_path, sheet = config$sheet, col_names = FALSE, range = cell_cols("A:I")))
   
@@ -58,8 +62,10 @@ create_zone_plot <- function(config) {
   df_proj_adj <- df_line %>% filter(Scenario != hist_name) %>% left_join(scaling[,c("Scenario", "Ratio")], by = "Scenario") %>% mutate(GHG = GHG * Ratio)
   anchor <- scaling %>% select(Scenario) %>% mutate(Year = 2023, GHG = ref_hist$Value_2023, Region = df_line$Region[1])
   
+  # 原始数据合并
   df_line_raw <- bind_rows(df_line %>% filter(Scenario == hist_name), df_proj_adj %>% select(-Ratio), anchor) %>% arrange(Scenario, Year)
-
+  
+  # 分段处理：History 不变，预测部分平滑
   df_hist_part <- df_line_raw %>% filter(Scenario == hist_name)
   
   df_proj_smooth <- df_line_raw %>%
@@ -70,7 +76,8 @@ create_zone_plot <- function(config) {
     ) %>%
     mutate(Year = map(res, ~ .x$x), GHG = map(res, ~ .x$y)) %>%
     select(-res) %>% unnest(cols = c(Year, GHG)) %>% ungroup()
-
+  
+  # 合并结果
   df_line_smooth <- bind_rows(df_hist_part, df_proj_smooth) %>%
     mutate(
       U_Rate = ifelse(Scenario == hist_name, 0.05, 0.15 * (Year - 2023)/(2060-2023)),
@@ -113,6 +120,9 @@ create_zone_plot <- function(config) {
   plot_grid(p_map, p_line, p_bar, ncol = 3, align = "h", axis = "tb", rel_widths = c(3.7, 7, 7))
 }
 
+# ============================================================
+# 3 - 5. 生成、图例与导出 (保持不变)
+# ============================================================
 plot_list <- list()
 for (i in seq_along(zone_configs)) { plot_list[[i]] <- create_zone_plot(zone_configs[[i]]) }
 plot_list <- plot_list[!sapply(plot_list, is.null)]
@@ -143,4 +153,11 @@ combined_legend <- plot_grid(legend_line, legend_bar, ncol = 1, align = "v", rel
 
 final_plot_with_legend <- plot_grid(main_plot_grid, combined_legend, ncol = 1, rel_heights = c(24, 2))
 ggsave(output_path, final_plot_with_legend, width = 18, height = 24, units = "cm", dpi = 600, bg = "white")
-print(paste(":", output_path))
+print(paste("已导出平滑版图表:", output_path))
+
+
+
+
+
+
+
